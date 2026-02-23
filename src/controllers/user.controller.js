@@ -5,7 +5,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiRresponse } from "../utils/ApiResponse.js"
 
 const registerUser = asyncHandler(async (req, res) => {
-    // get user details from frontend *
+
+    // get user details from frontend 
     // validation - not empty fields
     // check if user already exist: username, email
     // check for images, check for avatar
@@ -16,18 +17,18 @@ const registerUser = asyncHandler(async (req, res) => {
     // return response if user created , else error
 
     // Getting User Details
-    const { fullname, email, username, password } = req.body
-    console.log("Email : ", email)
+    const { fullName, email, username, password } = req.body
+    // console.log("Email : ", email)
     
     // Validation : is Empty?
     if (
-        [fullname,email,username,password].some((field)=> field?.trim()==="")
+        [fullName,email,username,password].some((field)=> field?.trim()==="")
     ) {
         throw new ApiError(400,"All Fields Are Required")
     } 
 
     // Check User Already Exist or Not
-    const existedUser =User.findOne({
+    const existedUser = await User.findOne({
         $or:[{ username },{ email }]
     })
 
@@ -54,7 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Creating user object in database mongo db atlas database
     const user = await User.create({
-        fullname,
+        fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email,
