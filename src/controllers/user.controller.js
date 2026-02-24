@@ -3,8 +3,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiRresponse } from "../utils/ApiResponse.js"
-import fs from "fs"
-import { log } from "console"
+import { unlinkFiles } from "../utils/unlinkFiles.js"
 
 const registerUser = asyncHandler(async (req, res) => {
 
@@ -28,7 +27,6 @@ const registerUser = asyncHandler(async (req, res) => {
     
 
 
-
     // Validation : is Empty?
     if (
         [fullName,email,username,password].some((field)=> field?.trim()==="")
@@ -37,29 +35,13 @@ const registerUser = asyncHandler(async (req, res) => {
     } 
 
 
-
-
-    // Check User Already Exist or Not
-    const existedUser = await User.findOne({
-        $or:[{ username },{ email }]
-    })
-
-    if (existedUser) {
-        throw new ApiError(409,"User Email or Username Already Exist")
-    }
-
-
-    console.log("Here I Am");
-    
-
     // Check For Image Files And There Local Paths
     const avatarLocalPath = req.files?.avatar[0]?.path;
     // let coverImageLocalPath = req.files?.coverImage[0]?.path;
     let coverImageLocalPath = null;
     
     // if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-    //     coverImageLocalPath = req.files?.coverImage[0]?.path;
-        
+    //     coverImageLocalPath = req.files?.coverImage[0]?.path;    
     // }
 
     if (req.files.coverImage) {
@@ -70,6 +52,23 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400,"Avatar File is required")
     }
 
+
+    // Check User Already Exist or Not
+    const existedUser = await User.findOne({
+        $or:[{ username },{ email }]
+    })
+
+    if (existedUser) {
+        unlinkFiles([avatarLocalPath,coverImageLocalPath])
+        // unlinkFiles(coverImageLocalPath)
+        throw new ApiError(409,"User Email or Username Already Exist")
+    }
+
+
+    console.log("Here I Am");
+    
+
+    // Removed
 
 
 
