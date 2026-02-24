@@ -2,18 +2,17 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
-import { ApiRresponse } from "../utils/ApiResponse.js"
+import { ApiResponse } from "../utils/ApiResponse.js"
 import { unlinkFiles } from "../utils/unlinkFiles.js"
-import { validateHeaderName } from "http"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateRefreshToken()
-        const refrehToken = user.generateAccessToken()
+        const refreshToken = user.generateAccessToken()
         
-        user.refreshToken = refrehToken
+        user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
         
         return {accessToken,refreshToken}
@@ -143,7 +142,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Returning Created User With Data Along With Success Status And Message
     return res.status(201).json(
-        new ApiRresponse(200,createdUser,"User Registred Successfully")
+        new ApiResponse(200,createdUser,"User Registred Successfully")
     )
 
 })
@@ -158,7 +157,9 @@ const loginUser = asyncHandler(async (req, res) => {
     // access and refresh token
     // send cookies
     
-    const { username, email, password } = req.body
+
+    const {email, username, password } = req.body
+
     if (!username || !email) {
         throw new ApiError(400, "username email required")
     }
@@ -170,16 +171,15 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(404, "User Does Not Exist")
     }
-    
+
     const isPasswordValid = await user.isPasswordCorrect(password)
 
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid User Credentials")
     }
-    
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
     
-    const loggedInUser = User.findById(user._id).select("-password -refreshToken")
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
     
     
     const option = {
@@ -192,9 +192,8 @@ const loginUser = asyncHandler(async (req, res) => {
         .cookie("accessToken", accessToken, option)
         .cookie("refreshTokoen", refreshToken, option)
         .json(
-            new ApiRresponse(200, {
-                user: loggedInUser, accessToken,
-                refreshToken
+            new ApiResponse(200, {
+                user: loggedInUser, accessToken, refreshToken
             },
                 "User Logged In"
             )
@@ -224,7 +223,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         .status(200)
         .clearCookie("accessToken", option)
         .clearCookie("refreshToken", option)
-        .json(new ApiRresponse(200, {},"User Logged Out"))
+        .json(new ApiResponse(200, {},"User Logged Out"))
 })
 
 
