@@ -35,22 +35,31 @@ const registerUser = asyncHandler(async (req, res) => {
     } 
 
 
-    // Check For Image Files And There Local Paths
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    // let coverImageLocalPath = req.files?.coverImage[0]?.path;
-    let coverImageLocalPath = null;
     
-    // if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-    //     coverImageLocalPath = req.files?.coverImage[0]?.path;    
+
+    // Check For Image Files And There Local Paths
+    
+    // let coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let avatarLocalPath = null;
+    let coverImageLocalPath;
+    
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files?.coverImage[0]?.path;    
+    }
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
+        coverImageLocalPath = req.files?.avatar[0]?.path;    
+    }
+
+    // if (req.files.coverImage) {
+    //     coverImageLocalPath = req.files?.coverImage[0]?.path;
     // }
 
-    if (req.files.coverImage) {
-        coverImageLocalPath = req.files?.coverImage[0]?.path;
-    }
-
     if (!avatarLocalPath) {
+        console.log(avatarLocalPath);
+        unlinkFiles([coverImageLocalPath])
         throw new ApiError(400,"Avatar File is required")
     }
+
 
 
     // Check User Already Exist or Not
@@ -69,7 +78,7 @@ const registerUser = asyncHandler(async (req, res) => {
     
 
     // Removed
-
+    
 
 
     //Uploaing FIles to Cloudinary
