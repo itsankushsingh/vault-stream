@@ -9,8 +9,8 @@ import { unlinkFiles } from "../utils/unlinkFiles.js"
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId)
-        const accessToken = user.generateRefreshToken()
-        const refreshToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+        const accessToken = user.generateAccessToken()
         
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
@@ -160,7 +160,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const {email, username, password } = req.body
 
-    if (!username || !email) {
+    if (!(username || email)) {
         throw new ApiError(400, "username email required")
     }
 
@@ -206,7 +206,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-
             $set: {
                 refreshToken: undefined
             }
