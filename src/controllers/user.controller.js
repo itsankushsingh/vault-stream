@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { unlinkFiles } from "../utils/unlinkFiles.js"
+import jwt from "jsonwebtoken"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -41,8 +42,6 @@ const registerUser = asyncHandler(async (req, res) => {
     // Getting User Details
     const { fullName, email, username, password } = req.body
     
-    // console.log("Email : ", email)
-    
 
 
     // Validation : is Empty?
@@ -57,8 +56,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Check For Image Files And There Local Paths
     
-    // let coverImageLocalPath = req.files?.coverImage[0]?.path;
-    // console.log(req.files.avatar)
     let avatarLocalPath;
     let coverImageLocalPath;
     
@@ -69,12 +66,9 @@ const registerUser = asyncHandler(async (req, res) => {
         avatarLocalPath = req.files.avatar[0].path;    
     }
 
-    // if (req.files.coverImage) {
-    //     coverImageLocalPath = req.files?.coverImage[0]?.path;
-    // }
+
 
     if (!avatarLocalPath) {
-        console.log(avatarLocalPath);
         unlinkFiles([coverImageLocalPath])
         throw new ApiError(400,"Avatar File is required")
     }
@@ -88,12 +82,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (existedUser) {
         unlinkFiles([avatarLocalPath,coverImageLocalPath])
-        // unlinkFiles(coverImageLocalPath)
         throw new ApiError(409,"User Email or Username Already Exist")
     }
 
-
-    console.log("Here I Am");
     
 
     // Removed
@@ -181,15 +172,15 @@ const loginUser = asyncHandler(async (req, res) => {
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
     
     
-    const option = {
+    const options = {
         httpOnly: true,
         secure: true
     }
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, option)
-        .cookie("refreshTokoen", refreshToken, option)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(200, {
                 user: loggedInUser, accessToken, refreshToken
@@ -220,14 +211,68 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .clearCookie("accessToken", option)
-        .clearCookie("refreshToken", option)
+        // .clearCookie("refreshTokoen", option)   
+        // .clearCookie("refreshToken", option)   
         .json(new ApiResponse(200, {},"User Logged Out"))
 })
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!incomingRefreshToken) {
+        throw new ApiError(401,"Unauthorized request")
+    }
 
+    
+    try {
+
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+        
+    
+        if (!user) {
+            throw new ApiError(401,"Invalid Request Token")
+        }
+    
+        if (incomingRefreshToken !== user?.refreshToken) {
+            throw new ApiError(401,"Refresh Token is Expired")
+    
+        }
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+    
+        const { accessToken,newrefreshToken }=await generateAccessAndRefreshTokens(user._id)
+    
+        return res
+            .status(200)
+            .cookie("accessToken",accessToken,options)
+            .cookie("refreshToken",newrefreshToken,options)
+            .json(
+                new ApiResponse(
+                    200,
+                    {
+                        accessToken,
+                        refereshToken: newrefreshToken
+                    },
+                    "Access Token Refreshed"
+                )
+            
+        )
+    } catch (error) {
+        throw new ApiError(
+            401,
+            error?.message || "Something Went Wrong While Decoding"
+        )
+        
+    }
+
+})
 
 export {
     registerUser,
     loginUser,
     logoutUser,
+    refreshAccessToken,
 }
