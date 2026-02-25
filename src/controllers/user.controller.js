@@ -58,7 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // Check For Image Files And There Local Paths
     
     // let coverImageLocalPath = req.files?.coverImage[0]?.path;
-    console.log(req.files.avatar)
+    // console.log(req.files.avatar)
     let avatarLocalPath;
     let coverImageLocalPath;
     
@@ -122,7 +122,6 @@ const registerUser = asyncHandler(async (req, res) => {
         username: username.toLowerCase()
         
     })
-
 
 
 
