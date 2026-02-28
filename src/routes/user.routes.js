@@ -9,6 +9,8 @@ import {
     updateUserDetails,
     updateUserAvatar,
     updateUserCover,
+    getUserChannelProfile,
+    getUserWatchHistory,
 } from "../controllers/user.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
