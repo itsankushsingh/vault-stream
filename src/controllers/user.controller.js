@@ -258,18 +258,16 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
                         accessToken,
                         refereshToken: newrefreshToken
                     },
+
                     "Access Token Refreshed"
                 )
-            
         )
     } catch (error) {
         throw new ApiError(
             401,
             error?.message || "Something Went Wrong While Decoding"
         )
-        
     }
-
 })
 
 // Change Current Password
@@ -385,7 +383,6 @@ const updateUserCover = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, user, "Cover Image Updated Successfully"))
 })
-
 
 //Aggregation Pipeline For User Channel Profile
 const getUserChannelProfile = asyncHandler(async (req, res) => { 
